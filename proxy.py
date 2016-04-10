@@ -8,6 +8,14 @@ from bs4 import BeautifulSoup
 
 
 
+QWorkerCount = 12
+
+if len(sys.argv) > 1:
+	proxyForTest = sys.argv[1]
+else: 
+	print "Add target url for testing proxy"
+	exit()
+
 send_headers = {
     'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36',
 }
@@ -31,9 +39,6 @@ USER_AGENTS = [
   "Opera/9.80 (Macintosh; Intel Mac OS X 10.6.8; U; fr) Presto/2.9.168 Version/11.52",
 ]
 
-proxyForTest = "http://www.baidu.com"
-if len(sys.argv) > 1:
-	proxyForTest = sys.argv[1]
 
 
 
@@ -66,6 +71,8 @@ def fetchIP84():
 		"http://ip84.com/gn/2",
 		"http://ip84.com/gn/3",
 		"http://ip84.com/gn/4",
+		"http://ip84.com/gn/5",
+		"http://ip84.com/gn/6",
  	]
 	for requestURL in requestURLs:
 		request = urllib2.Request(requestURL, headers=send_headers)
@@ -81,6 +88,27 @@ def fetchIP84():
 			proxyArray.append(proxy)
 	return proxyArray
 
+
+def fetchMimiIP():
+	proxyArray = []
+	requestURLs = [
+		"http://www.mimiip.com/gngao/1",
+		"http://www.mimiip.com/gngao/2",
+		"http://www.mimiip.com/gngao/3",
+	]
+	for requestURL in requestURLs:
+		request = urllib2.Request(requestURL, headers=send_headers)
+		page = urllib2.urlopen(request)
+		soup = BeautifulSoup(page)
+		trs = soup.select('tr')
+		count = len(trs)
+		for index in range(1, count):
+			tr = trs[index]
+			tds = tr.select('td')
+			proxy = {tds[4].text.lower() : tds[0].text + ":" + tds[1].text}
+		# 	# print proxy
+			proxyArray.append(proxy)
+	return proxyArray
 
 
 
@@ -99,12 +127,14 @@ def makeRequest(proxy):
 		print e
 	else:
 		if proxyForTest == html.geturl():
-			# for key, value in proxy.items():  
-			# 	print "\"%s\":\"%s\" checked" % (key, value)  
+			for key, value in proxy.items():  
+				print "\"%s\":\"%s\" checked" % (key, value)  
 			# couldUse.append(proxy)
-			return proxy
 			# doc = html.read()
 			# print doc 
+			return proxy
+		else: 
+			return None
 
 
 
@@ -134,13 +164,20 @@ class WorkThread(threading.Thread):
 
 couldUse = []
 
-proxyOri =  fetchIP84()
 workQueue = Queue.Queue(0)
+proxyOri =  fetchIP84()
+print "IP84 Get %d" %(len(proxyOri))
 
 for word in proxyOri: 
 	workQueue.put(word) 
 
-for i in range(10): 
+proxyOri = fetchMimiIP()
+print "MimiIP Get %d" %(len(proxyOri))
+
+for word in proxyOri: 
+	workQueue.put(word) 
+
+for i in range(QWorkerCount): 
 	name = "Thread " + str(i)
 	thread = WorkThread(name, workQueue)
 	thread.start() 
@@ -153,4 +190,6 @@ print "Exiting Main Thread"
 
 
 # For Proxy Test.
-# makeRequest({"http":"182.34.21.77:8118"})
+# makeRequest({"http":"106.2.78.15:80"})
+
+
