@@ -78,22 +78,22 @@ class WorkThread(threading.Thread):
 # makeAProxyRequest({"http":"115.218.216.90:9000"}, 'https://www.baidu.com/')
 # makeAProxyRequest({"http":"115.218.216.90:9000"}, 'http://www.v2ex.com/')
 
-jsonFile = "proxy.json"
-f = open(jsonFile)
-fileData = f.read()
-f.close()
-proxys = json.loads(fileData)
-
-
-workQueue = Queue.Queue(0)
-
-for proxy in proxys:
-	workQueue.put(proxy)
-
-for i in range(10):
-	name = "Thread " + str(i)
-	thread = WorkThread(name, workQueue)
-	thread.start()
-workQueue.join()
+# jsonFile = "proxy.json"
+# f = open(jsonFile)
+# fileData = f.read()
+# f.close()
+# proxys = json.loads(fileData)
+#
+#
+# workQueue = Queue.Queue(0)
+#
+# for proxy in proxys:
+# 	workQueue.put(proxy)
+#
+# for i in range(10):
+# 	name = "Thread " + str(i)
+# 	thread = WorkThread(name, workQueue)
+# 	thread.start()
+# workQueue.join()
 
 
