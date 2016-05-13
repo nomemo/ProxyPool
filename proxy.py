@@ -42,17 +42,19 @@ if __name__ == '__main__':
 
 	proxies = []
 
-	workQueue = Queue.Queue(0)
+
+
 	proxyOri =  collector.fetchIP84()
 	print "IP84 Get %d" %(len(proxyOri))
-
 	proxies.extend(proxyOri)
-
 	proxyOri = collector.fetchMimiIP()
 	print "MimiIP Get %d" %(len(proxyOri))
-
+	proxies.extend(proxyOri)
+	proxyOri = collector.fetchNianShao()
+	print "NianShao Get %d" % (len(proxyOri))
 	proxies.extend(proxyOri)
 
+	workQueue = Queue.Queue(0)
 	for proxy in proxies:
 		workQueue.put(proxy)
 
