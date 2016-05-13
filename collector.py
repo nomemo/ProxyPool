@@ -1,7 +1,8 @@
 
 from bs4 import BeautifulSoup
 from settings import USER_AGENTS as USER_AGENTS
-
+import random
+import urllib2
 
 def fetchIP84():
 	proxyArray = []

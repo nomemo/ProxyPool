@@ -7,6 +7,20 @@ import threading
 import Queue
 import json
 import requests
+from settings import USER_AGENTS
+
+def makeRequest(proxy, target):
+	i_headers = {'User-Agent': random.choice(USER_AGENTS)}
+	print("\n")
+	try:
+		r = requests.get(target, proxies=proxy, headers=i_headers, timeout=5)
+	except Exception, e:
+		print "Test Failed: %s By %s \nException: %s" % (target, str(proxy), str(e))
+		return False
+	else:
+		print "Test Successed: %s By %s" % (target, str(proxy))
+		return True
+
 
 def makeAProxyRequest(proxy, testTarget):
     i_headers = {'User-Agent':random.choice(settings.USER_AGENTS)}

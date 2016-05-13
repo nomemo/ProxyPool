@@ -1,46 +1,19 @@
-import urllib2
 import json
-import random
 import threading
 import Queue
 import sys
-from bs4 import BeautifulSoup
-
-from settings import USER_AGENTS as USER_AGENTS
+import collector
+from tester import makeRequest
 
 QWorkerCount = 12
-
-def makeRequest(proxy):
-	print "makeRequest: "
-	print proxy
-	i_headers = {'User-Agent':random.choice(USER_AGENTS)}
-
-	proxy_support = urllib2.ProxyHandler(proxy)
-	opener = urllib2.build_opener(proxy_support)
-	urllib2.install_opener(opener)
-	
-	req = urllib2.Request(proxyForTest, headers=i_headers)
-
-	try:
-		html = urllib2.urlopen(req, timeout = 10)
-	except Exception, e:
-		print e
-	else:
-		if proxyForTest == html.geturl():
-			for key, value in proxy.items():  
-				print "\"%s\":\"%s\" checked" % (key, value)  
-			# couldUse.append(proxy)
-			# doc = html.read()
-			# print doc 
-			return proxy
-		else: 
-			return None
+result = []
 
 class WorkThread(threading.Thread):
-	def __init__(self, name, q):
+	def __init__(self, name, queue, target):
 		super(WorkThread, self).__init__()
-		self.queue = q
-		self.name = name 
+		self.queue = queue
+		self.name = name
+		self.target = target
 
 	def run(self):
 		print "Starting " + self.name
@@ -53,46 +26,44 @@ class WorkThread(threading.Thread):
 			proxy = self.queue.get()
 			if proxy != None:
 				print "Thread: " + self.name + " Size: " + str(self.queue.qsize())
-				proxy = makeRequest(proxy)
-				if proxy != None:
-					couldUse.append(proxy) 
+				couldUse = makeRequest(proxy, self.target)
+				if couldUse == True:
+					result.append(proxy)
 			self.queue.task_done()
 
-
 if __name__ == '__main__':
-
-	# if len(sys.argv) > 1:
-	# 	proxyForTest = sys.argv[1]
-	# else: 
-	# 	print "Add target url for testing proxy"
-	# 	exit()
+	if len(sys.argv) > 1:
+		targetURL = sys.argv[1]
+	else: 
+		print "Add target url for testing proxy"
+		exit()
 
 	print "begin...."
 
-	couldUse = []
+	proxies = []
 
 	workQueue = Queue.Queue(0)
-	proxyOri =  fetchIP84()
+	proxyOri =  collector.fetchIP84()
 	print "IP84 Get %d" %(len(proxyOri))
 
-	# for word in proxyOri: 
-	# 	workQueue.put(word) 
-	couldUse.extend(proxyOri)
+	proxies.extend(proxyOri)
 
-	proxyOri = fetchMimiIP()
+	proxyOri = collector.fetchMimiIP()
 	print "MimiIP Get %d" %(len(proxyOri))
 
-	# for word in proxyOri: 
-	# 	workQueue.put(word) 
+	proxies.extend(proxyOri)
 
-	couldUse.extend(proxyOri)
+	for proxy in proxies:
+		workQueue.put(proxy)
 
-	# for i in range(QWorkerCount): 
-	# 	name = "Thread " + str(i)
-	# 	thread = WorkThread(name, workQueue)
-	# 	thread.start() 
-	# workQueue.join()
 
+	for i in range(QWorkerCount):
+		name = "Thread " + str(i)
+		thread = WorkThread(name, workQueue, targetURL)
+		thread.start()
+	workQueue.join()
+
+	print "result %d" %(len(result))
 	with open('proxy.json', 'w') as f:
-	  f.write(json.dumps(couldUse))
+	  f.write(json.dumps(result))
 	print "work done"
